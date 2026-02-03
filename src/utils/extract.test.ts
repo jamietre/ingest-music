@@ -121,6 +121,25 @@ describe("listAudioFiles", () => {
       await fs.rm(tmpDir, { recursive: true, force: true });
     }
   });
+
+  it("respects exclude patterns", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "test-audio-exclude-"));
+
+    try {
+      await fs.writeFile(path.join(tmpDir, "track1.flac"), "");
+      await fs.writeFile(path.join(tmpDir, ".DS_Store"), "");
+      await fs.writeFile(path.join(tmpDir, "._track2.flac"), "");
+      await fs.writeFile(path.join(tmpDir, "track3.flac"), "");
+
+      const files = await listAudioFiles(tmpDir, ["^\\.DS_Store$", "^\\._"]);
+      const basenames = files.map(f => path.basename(f));
+
+      // Only track1.flac and track3.flac should be included
+      expect(basenames).toEqual(["track1.flac", "track3.flac"]);
+    } finally {
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("listNonAudioFiles", () => {

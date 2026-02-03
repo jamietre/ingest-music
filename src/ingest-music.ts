@@ -889,7 +889,7 @@ async function processSingleArchive(
 
   // Step 6: Prepare working directory (extract archive or use directory)
   onProgress("\nPreparing working directory...");
-  const workingDir = await extractArchive(zipPath, onProgress);
+  const workingDir = await extractArchive(zipPath, onProgress, config.ignoreFilePatterns);
   // Keep track of original source directory for non-audio files
   let sourceDir = workingDir.path;
 

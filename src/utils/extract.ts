@@ -10,6 +10,7 @@ import { createExtractorFromFile } from "node-unrar-js";
 import type { ProgressCallback } from "../config/types.js";
 import { naturalCompare } from "../matching/match.js";
 import { getAudioExtensions } from "../audio/formats.js";
+import { logger } from "./logger.js";
 
 const AUDIO_EXTENSIONS = getAudioExtensions();
 
@@ -70,6 +71,7 @@ export interface WorkingDirectory {
 export async function extractArchive(
   inputPath: string,
   onProgress?: ProgressCallback,
+  excludePatterns: string[] = [],
 ): Promise<WorkingDirectory> {
   // Check if input is a directory
   const stats = await fs.stat(inputPath);
@@ -92,16 +94,16 @@ export async function extractArchive(
 
   switch (format) {
     case "zip":
-      await extractZip(inputPath, tmpDir, onProgress);
+      await extractZip(inputPath, tmpDir, onProgress, excludePatterns);
       break;
     case "tar.gz":
-      await extractTarGz(inputPath, tmpDir, onProgress);
+      await extractTarGz(inputPath, tmpDir, onProgress, excludePatterns);
       break;
     case "gz":
-      await extractGz(inputPath, tmpDir, onProgress);
+      await extractGz(inputPath, tmpDir, onProgress, excludePatterns);
       break;
     case "rar":
-      await extractRar(inputPath, tmpDir, onProgress);
+      await extractRar(inputPath, tmpDir, onProgress, excludePatterns);
       break;
   }
 
@@ -118,6 +120,7 @@ async function extractZip(
   archivePath: string,
   destDir: string,
   onProgress?: ProgressCallback,
+  excludePatterns: string[] = [],
 ): Promise<void> {
   // Open with lazyEntries: false (default) for better memory efficiency
   const zipFile = await open(archivePath, {
@@ -130,6 +133,13 @@ async function extractZip(
       if (entry.filename.endsWith("/")) continue;
 
       const outName = path.basename(entry.filename);
+
+      // Skip files matching exclude patterns
+      if (shouldExcludeFile(outName, excludePatterns)) {
+        logger.debug(`Skipping excluded file: ${outName}`);
+        continue;
+      }
+
       const outPath = path.join(destDir, outName);
 
       onProgress?.(`  Extracting: ${outName}`);
@@ -149,9 +159,21 @@ async function extractTarGz(
   archivePath: string,
   destDir: string,
   onProgress?: ProgressCallback,
+  excludePatterns: string[] = [],
 ): Promise<void> {
   onProgress?.("  Extracting tar.gz...");
-  await tar.extract({ file: archivePath, cwd: destDir });
+  await tar.extract({
+    file: archivePath,
+    cwd: destDir,
+    filter: (path, entry) => {
+      const basename = path.split("/").pop() || "";
+      const shouldExclude = shouldExcludeFile(basename, excludePatterns);
+      if (shouldExclude) {
+        logger.debug(`Skipping excluded file: ${basename}`);
+      }
+      return !shouldExclude;
+    },
+  });
 }
 
 /**
@@ -162,9 +184,17 @@ async function extractGz(
   archivePath: string,
   destDir: string,
   onProgress?: ProgressCallback,
+  excludePatterns: string[] = [],
 ): Promise<void> {
   onProgress?.("  Decompressing .gz...");
   const baseName = path.basename(archivePath, ".gz");
+
+  // Skip if the output file would be excluded
+  if (shouldExcludeFile(baseName, excludePatterns)) {
+    logger.debug(`Skipping excluded file: ${baseName}`);
+    return;
+  }
+
   const outPath = path.join(destDir, baseName);
   await pipeline(
     createReadStream(archivePath),
@@ -180,6 +210,7 @@ async function extractRar(
   archivePath: string,
   destDir: string,
   onProgress?: ProgressCallback,
+  excludePatterns: string[] = [],
 ): Promise<void> {
   onProgress?.("  Extracting RAR archive...");
 
@@ -189,14 +220,27 @@ async function extractRar(
     targetPath: destDir,
   });
 
-  // Get file list and extract all
-  const { fileHeaders } = extractor.getFileList();
-  const extracted = extractor.extract();
+  // Extract with filter function
+  const extracted = extractor.extract({
+    files: (fileHeader) => {
+      if (fileHeader.flags.directory) return false;
 
-  // Log progress for each file
-  for (const file of extracted.files) {
-    if (file.fileHeader.flags.directory) continue;
-    onProgress?.(`  Extracting: ${path.basename(file.fileHeader.name)}`);
+      const basename = path.basename(fileHeader.name);
+      const shouldExclude = shouldExcludeFile(basename, excludePatterns);
+
+      if (shouldExclude) {
+        logger.debug(`Skipping excluded file: ${basename}`);
+        return false;
+      }
+
+      onProgress?.(`  Extracting: ${basename}`);
+      return true;
+    },
+  });
+
+  // Consume the files iterator to actually perform the extraction
+  for (const _file of extracted.files) {
+    // Files are extracted as we iterate
   }
 }
 

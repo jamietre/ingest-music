@@ -25,6 +25,145 @@ brew install ffmpeg
 pnpm install
 ```
 
+## Setup & Configuration
+
+### Quick Start
+
+Create a config file with your API keys and library path:
+
+```bash
+mkdir -p ~/.config/ingest-music
+cp config-example.json ~/.config/ingest-music/config.json
+```
+
+Edit `~/.config/ingest-music/config.json` with your settings:
+
+```json
+{
+  "libraryBasePath": "/path/to/your/music/library",
+  "setlistSources": {
+    "setlist.fm": {
+      "apiKey": "your-setlist-fm-api-key"
+    },
+    "phish.net": {
+      "apiKey": "your-phish-net-api-key"
+    }
+  }
+}
+```
+
+**Required:**
+- `libraryBasePath` - Where your organized music library will be stored
+
+**Get API Keys:**
+- **setlist.fm**: Register at https://www.setlist.fm/settings/api (free)
+- **phish.net**: Register at https://api.phish.net/keys/ (free, Phish shows only)
+- **kglw.net**: No API key needed (King Gizzard shows only)
+
+### Optional: LLM Integration
+
+LLM can help identify shows when filenames are ambiguous or incomplete. Supports local (Ollama) and cloud providers (Anthropic, OpenAI).
+
+**Option 1: Local LLM (Ollama)**
+```bash
+# Install Ollama: https://ollama.com
+ollama pull qwen2.5:7b
+```
+
+Add to config:
+```json
+{
+  "llm": {
+    "enabled": true,
+    "provider": "ollama",
+    "model": "qwen2.5:7b",
+    "apiEndpoint": "http://127.0.0.1:11434",
+    "autoApply": false
+  }
+}
+```
+
+**Option 2: Cloud LLM (Anthropic)**
+```json
+{
+  "llm": {
+    "enabled": true,
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-5-20250929",
+    "apiKey": "your-anthropic-api-key",
+    "autoApply": false
+  }
+}
+```
+
+**Option 3: Cloud LLM (OpenAI)**
+```json
+{
+  "llm": {
+    "enabled": true,
+    "provider": "openai",
+    "model": "gpt-4",
+    "apiKey": "your-openai-api-key",
+    "autoApply": false
+  }
+}
+```
+
+**LLM Options:**
+- `enabled` - Enable/disable LLM assistance
+- `provider` - `"ollama"`, `"anthropic"`, or `"openai"`
+- `model` - Model name to use
+- `apiEndpoint` - API URL (for Ollama/self-hosted only)
+- `apiKey` - API key (for cloud providers only)
+- `autoApply` - Auto-apply suggestions (`true`) or prompt for confirmation (`false`)
+- `maxTokens` - Max tokens per request (optional, default: 4000)
+- `maxTokensPerRun` - Budget limit per show (optional, default: 50000)
+
+### Optional: Web Search Integration
+
+Web search can help identify obscure shows or verify artist information. Supports Brave and Serper.
+
+**Option 1: Brave Search**
+```json
+{
+  "webSearch": {
+    "enabled": true,
+    "provider": "brave",
+    "apiKey": "your-brave-api-key",
+    "maxResults": 10
+  }
+}
+```
+
+Get API key: https://brave.com/search/api/ (free tier: 2,000 queries/month)
+
+**Option 2: Serper (Google Search)**
+```json
+{
+  "webSearch": {
+    "enabled": true,
+    "provider": "serper",
+    "apiKey": "your-serper-api-key",
+    "maxResults": 10
+  }
+}
+```
+
+Get API key: https://serper.dev/ (free tier: 2,500 queries)
+
+**Web Search Options:**
+- `enabled` - Enable/disable web search
+- `provider` - `"brave"` or `"serper"`
+- `apiKey` - Your API key
+- `maxResults` - Number of results to fetch (optional, default: 10)
+
+### CLI Overrides
+
+You can override config settings via CLI flags:
+- `--use-llm` - Enable LLM for this run (even if disabled in config)
+- `--use-web` - Enable web search for this run (even if disabled in config)
+- `--debug` - Enable debug logging
+
 ## Usage
 
 ```bash

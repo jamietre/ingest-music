@@ -66,7 +66,7 @@ export class ShowIdentificationOrchestrator {
 
     if (needsExtraction) {
       logger.debug("Extracting archive for strategies that require it...");
-      const workingDir = await extractArchive(archivePath);
+      const workingDir = await extractArchive(archivePath, undefined, config.ignoreFilePatterns);
       context.extractedDir = workingDir.path;
 
       // Read text files from extracted directory

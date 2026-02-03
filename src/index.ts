@@ -158,9 +158,9 @@ const ingestCommand = buildCommand({
     }
 
     console.log(`Input: ${flags.url ? flags.url : inputPath}`);
-    console.log(
-      `Mode:  ${flags["dry-run"] ? "DRY RUN" : flags.batch ? "BATCH" : "SINGLE"}`
-    );
+    if (flags.batch) {
+      console.log(`Mode:  BATCH`);
+    }
     console.log();
 
     try {
