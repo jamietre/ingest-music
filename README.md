@@ -6,6 +6,42 @@ Process concert recording archives or directories into an organized, tagged musi
 
 I download live recordings a lot, but they come in all different formats depending on who created them. I want filenames, mp3 tags, encoding, and folder structure to be consistent and to my tastes. This is a command-line tool to simplify the process of ingesting things I download into my music library.
 
+
+## Features
+
+### Core Functionality
+- **Automatic show identification** - Parses artist, date, venue, and location from filenames or directory names
+- **Setlist fetching** - Retrieves official setlists from phish.net, kglw.net, or setlist.fm
+- **Track matching** - Intelligently matches audio files to setlist songs using metadata, filenames, or position
+- **Audio conversion** - Converts from any format (WAV, SHN, APE, ALAC, etc.) to FLAC with configurable compression
+- **ID3/Vorbis tagging** - Tags files with artist, album, title, track numbers, venue, date, and more
+- **Organized output** - Copies tagged files to your library using customizable path and filename templates
+
+### Archive Handling
+- **Multiple formats** - Supports ZIP, RAR, TAR.GZ, and GZ archives
+- **Nested directories** - Automatically handles complex directory structures
+- **Subdirectory selection** - Process specific subdirectories (e.g., "SOUNDBOARD_MIX" vs "AUDIENCE_MIX")
+- **Supplementary files** - Preserves artwork, info files, and other non-audio content with directory structure intact
+- **URL downloads** - Download and process archives directly from URLs
+
+### Advanced Features
+- **LLM assistance** - Use AI (Ollama, Anthropic, OpenAI) to identify shows with ambiguous or incomplete filenames
+- **Web search integration** - Verify artist information and find obscure shows using Brave or Serper APIs
+- **Track splitting** - Split single audio files into multiple tracks to match official setlists
+- **Track merging** - Combine multiple audio files into single tracks when tapers split differently
+- **Flexible templating** - Customize output paths, filenames, and metadata tags with variables and date formatting
+- **Band-specific configs** - Per-artist settings for setlist sources, genres, templates, and tag preservation
+- **Batch processing** - Process multiple archives in a directory with a single command
+- **Dry run mode** - Preview all changes before committing
+
+### Quality of Life
+- **Smart location formatting** - Automatically formats locations as "City, State" (US) or "City, Country" (international)
+- **Encore handling** - Option to merge encore songs into set 2 numbering
+- **Tag preservation** - Keep specific tags from original files (ReplayGain, encoder info, custom tags)
+- **Natural file sorting** - Correctly sorts "track2.flac" before "track10.flac"
+- **Progress reporting** - Real-time feedback on extraction, conversion, and copying
+- **Error handling** - Clear error messages with validation before processing
+
 ## Prerequisites
 
 - Node.js 18+
